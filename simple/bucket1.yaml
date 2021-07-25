@@ -1,0 +1,9 @@
+Resources:
+  MyBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: haj-cfm-chapter4
+      AccessControl: PublicRead
+      Tags:
+      - Key: project
+        Value: cfm-maarek

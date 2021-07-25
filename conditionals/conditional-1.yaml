@@ -1,0 +1,61 @@
+Parameters:
+  EnvType:
+    Description: environment to setup
+    Type: String
+    AllowedValues:
+      - prod
+      - test
+    ConstraintDescription: must specify env
+
+Conditions:
+  ExtraVolume: !Equals [!Ref EnvType, prod]
+
+Resources:
+  MyHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0233c2d874b811deb 
+      InstanceType: t2.nano
+      KeyName: cert-study
+      SubnetId: subnet-1768337f
+      SecurityGroupIds:
+        - !Ref ConditionalSG
+      Tags:
+        - Key:  project
+          Value: chapter8
+        - Key:  Name
+          Value:  conditionalhost2
+  
+  MountPoint:
+    Type: AWS::EC2::VolumeAttachment
+    Condition: ExtraVolume
+    Properties:
+      InstanceId: !Ref MyHost
+      VolumeId: !Ref NewVolume
+      Device: /dev/sdh
+  NewVolume:
+    Type: AWS::EC2::Volume
+    Condition:  ExtraVolume
+    Properties:
+      Size: 8
+      AvailabilityZone: !GetAtt
+        - MyHost
+        - AvailabilityZone
+
+
+  ConditionalSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: ConditionalSG
+      GroupDescription: securitygroup for conditional
+      VpcId: vpc-644b780c
+      SecurityGroupIngress:
+        CidrIp: 0.0.0.0/0
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: tcp
+      SecurityGroupEgress:
+        CidrIp: 0.0.0.0/0
+        FromPort: 0
+        ToPort: 65535
+        IpProtocol: -1

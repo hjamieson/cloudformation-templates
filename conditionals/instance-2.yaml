@@ -1,0 +1,16 @@
+Resources:
+  MyHost2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0233c2d874b811deb 
+      InstanceType: t2.nano
+      KeyName: cert-study
+      SubnetId: subnet-1768337f
+      SecurityGroupIds:
+        - !ImportValue chapter8-MainSG
+      IamInstanceProfile: !ImportValue chapter8-MyInstanceProfile
+      Tags:
+        - Key:  project
+          Value: chapter8
+        - Key:  Name
+          Value:  myhost2

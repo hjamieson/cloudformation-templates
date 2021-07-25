@@ -1,0 +1,38 @@
+Resources:
+  MyHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0233c2d874b811deb 
+      InstanceType: t2.nano
+      KeyName: cert-study
+      SubnetId: subnet-1768337f
+      SecurityGroupIds:
+        - !Ref mainSG
+      Tags:
+        - Key:  project
+          Value: user-data
+        - Key:  Name
+          Value:  bootstrap-host
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          amazon-linux-extras enable epel -y
+          yum install epel-release -y
+          yum install httpie -y
+  
+  mainSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: mainSG
+      GroupDescription: securitygroup for conditional
+      VpcId: vpc-644b780c
+      SecurityGroupIngress:
+        CidrIp: 0.0.0.0/0
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: tcp
+      SecurityGroupEgress:
+        CidrIp: 0.0.0.0/0
+        FromPort: 0
+        ToPort: 65535
+        IpProtocol: -1

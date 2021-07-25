@@ -1,0 +1,57 @@
+Resources:
+  MainSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: MainSG
+      GroupDescription: securitygroup for chapter8
+      VpcId: vpc-644b780c
+      SecurityGroupEgress:
+        CidrIp: 0.0.0.0/0
+        FromPort: 0
+        ToPort: 65535
+        IpProtocol: -1
+
+  SgIngress1:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: ingress for chapter8
+      GroupId: !Ref MainSG
+      CidrIp: 0.0.0.0/0
+      FromPort: 22
+      ToPort: 22
+      IpProtocol: tcp
+
+  MyHost1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-00017101cbd0aceef
+      InstanceType: t2.nano
+      KeyName: cert-study
+      SubnetId: subnet-1768337f
+      SecurityGroupIds:
+        - !Ref MainSG
+      Tags:
+        - Key:  project
+          Value: chapter8
+        - Key:  Name
+          Value:  myhost1
+
+  MyInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: chapter8-profile
+      Roles:
+        - chapter8-role
+
+Outputs:
+  MainSecurityGroupLogical:
+    Description: main securitygroup for chapter8
+    Value: !Ref MainSG
+    Export:
+      Name: !Join [ "-", [ !Ref AWS::StackName , MainSG ]]
+
+  InstanceProfileChapter8:
+    Description: main ec2 instance profile
+    Value: !Ref MyInstanceProfile
+    Export:
+      Name: !Join ["-",[ !Ref AWS::StackName, MyInstanceProfile]]
