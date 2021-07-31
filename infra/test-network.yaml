@@ -1,0 +1,25 @@
+# vpc resources our test cfs will refer to.
+Resources:
+  mainSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: mainSG
+      GroupDescription: securitygroup for conditional
+      VpcId: vpc-644b780c
+      SecurityGroupIngress:
+        CidrIp: 0.0.0.0/0
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: tcp
+      SecurityGroupEgress:
+        CidrIp: 0.0.0.0/0
+        FromPort: 0
+        ToPort: 65535
+        IpProtocol: -1
+
+Outputs:
+  MainSecurityGroup:
+    Description: default security group for testing
+    Value: !Ref mainSG
+    Export:
+      Name: !Join ["-",[!Ref AWS::StackName, DefaultSecurityGroup]]  
