@@ -1,0 +1,25 @@
+Resources:
+  MyHost:
+    Type: AWS::EC2::Instance
+    Metadata:
+      obj1: hugh
+      obj2: kay
+    Properties:
+      ImageId: ami-0233c2d874b811deb 
+      InstanceType: t2.nano
+      KeyName: cert-study
+      SubnetId: subnet-1768337f
+      SecurityGroupIds:
+        - !ImportValue testvpc-DefaultSecurityGroup
+      Tags:
+        - Key:  project
+          Value: user-data
+        - Key:  Name
+          Value:  !Sub ${AWS::StackName}-simple-host 
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          amazon-linux-extras enable epel -y
+          yum install epel-release -y
+          yum install httpie -y
+  

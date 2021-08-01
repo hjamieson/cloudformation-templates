@@ -2,17 +2,32 @@
 # Things to remember:
 # 1. you have to declare the CreationPolicy
 # 2. use the userdata to install + invoke the cfn- scripts
+# 3. be careful of objects in metadata; sometimes quotes around name are needed!
 
 Resources:
   MyHost:
     Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init :
+        config:
+          files:
+            "/tmp/test.txt" :
+              content : !Sub |
+                ${AWS::StackName} content here
+              mode : "000755"
+              owner : ec2-user
+              group : ec2-user
+          packages :
+            yum :
+              "tree" : []
+
     Properties:
       ImageId: ami-0233c2d874b811deb 
       InstanceType: t2.nano
       KeyName: cert-study
       SubnetId: subnet-1768337f
       SecurityGroupIds:
-        - !ImportValue test-network-DefaultSecurityGroup
+        - !ImportValue testvpc-DefaultSecurityGroup
       Tags:
         - Key:  project
           Value: cfn-init
@@ -26,19 +41,6 @@ Resources:
 
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource MyHost --region ${AWS::Region}
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource MyHost --region ${AWS::Region}
-    Metadata:
-      "AWS::Cloudformation::Init":
-        config:
-          files:
-            /tmp/test.txt:
-              content: !Sub |
-                ${AWS::StackName} content here
-              mode: 000755
-              owner: ec2-user
-              group: ec2-user
-          packages:
-            yum:
-              tree:[]
     CreationPolicy:
       ResourceSignal:
         Count: 1
