@@ -1,0 +1,55 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "EC2TemplateURL": {
+            "Default": "s3://lab12-jamiesoh/EC2Stack.template",
+            "Type": "String",
+            "Description": "EC2 Creation(Nested Template URL)"
+        },
+        "VPCTemplateURL": {
+            "Default": "s3://lab12-jamiesoh/VPCStack.template",
+            "Type": "String",
+            "Description": "VPC Creation(Nested Template URL)"
+        }
+    },
+    "Resources": {
+        "VPC": {
+            "Type": "AWS::CloudFormation::Stack",
+            "Properties": {
+                "TemplateURL": {
+                    "Ref": "VPCTemplateURL"
+                }
+            }
+        },
+        "EC2Server": {
+            "DependsOn": "VPC",
+            "Type": "AWS::CloudFormation::Stack",
+            "Properties": {
+                "TemplateURL": {
+                    "Ref": "EC2TemplateURL"
+                },
+				"Parameters": {
+                     "VPC": {
+                        "Fn::GetAtt": [ "VPC", "Outputs.VPCref" ]
+                    },
+					"PublicSubnet": {
+                        "Fn::GetAtt": [ "VPC", "Outputs.PublicSub" ]
+                    }
+
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "EC2data": {
+            "Value": {
+                "Fn::GetAtt": [ "EC2Server", "Outputs.ServerMachine" ]
+            }
+        },
+        "VPCdata": {
+            "Value": {
+                "Fn::GetAtt": [ "VPC", "Outputs.VPCref" ] 
+            }
+        }
+    }
+}
