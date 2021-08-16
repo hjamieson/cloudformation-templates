@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: EMR SecurityGroup Defns
+
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Description: target VPC
+    Default: vpc-05b28a46c5c9c6ed7
+  Prefix:
+    Type: String
+    Description: prefix added to all exports
+    Default: fido
+
+Resources:
+  MasterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${Prefix}-MasterSecurityGroup
+      GroupDescription: Hughs EMR security group - blame him
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - CidrIp: 10.84.0.0/16
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: icmp
+        - CidrIp: 10.84.0.0/16
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: udp
+        - CidrIp: 10.25.0.0/16
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+        - SourceSecurityGroupId: !Ref TaskSecurityGroup
+          IpProtocol: -1
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: -1
+      Tags:
+        - Key: Name 
+          Value: !Sub ${Prefix}-main-sg
+
+  TaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${Prefix}-TaskSecurityGroup
+      GroupDescription: Hughs EMR security group - blame him
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - CidrIp: 10.84.0.0/16
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: icmp
+        - CidrIp: 10.84.0.0/16
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: udp
+        - CidrIp: 10.25.0.0/16
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: -1
+      Tags:
+        - Key: Name 
+          Value: !Sub ${Prefix}-task-sg
+  ServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${Prefix}-ServiceSecurityGroup
+      GroupDescription: Hughs EMR security group - blame him
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 8443
+          ToPort: 9443
+          IpProtocol: tcp
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: -1
+      Tags:
+        - Key: Name 
+          Value: !Sub ${Prefix}-service-sg
+
+
+
+Outputs:
+  MainSecurityGroup:
+    Description: task securityGroup
+    Value: !Ref TaskSecurityGroup
+    Export:
+      Name: !Join ["-",[!Ref Prefix,TaskSecurityGroup]]

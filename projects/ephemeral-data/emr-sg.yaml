@@ -23,7 +23,23 @@ Resources:
       FromPort: -1
       ToPort: -1
       IpProtocol: icmp
-#      SourceSecurityGroupId: !Ref MasterSecurityGroup
+  SSHIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref MasterSecurityGroup
+      CidrIp: 10.25.0.0/16
+      FromPort: 22
+      ToPort: 22
+      IpProtocol: tcp
+  HadoopIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref MasterSecurityGroup
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: -1
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+
 
   MasterEgress:
     Type: AWS::EC2::SecurityGroupEgress

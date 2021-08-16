@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: EMR SecurityGroup Defns
+# see https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-man-sec-groups.html#emr-sg-elasticmapreduce-master-private
+
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Description: target VPC
+    Default: vpc-05b28a46c5c9c6ed7
+  Prefix:
+    Type: String
+    Description: prefix added to all exports
+    Default: fido
+
+
+Resources:
+  MasterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${Prefix}-MasterSecurityGroup"
+      GroupDescription: !Sub ${Prefix} main SG
+      VpcId: !Ref VPC
+  CoreSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${Prefix}-CoreSecurityGroup"
+      GroupDescription: !Sub ${Prefix} Core instances SG
+      VpcId: !Ref VPC
+  ServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${Prefix}-ServiceSecurityGroup"
+      GroupDescription: !Sub ${Prefix} service SG
+      VpcId: !Ref VPC
+
+  MasterIngressAllIcmp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+      FromPort: -1
+      ToPort: -1
+      IpProtocol: icmp
+      GroupId: !Ref MasterSecurityGroup
+  MasterIngressAllTCP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+      GroupId: !Ref MasterSecurityGroup
+  MasterIngressAllUdp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: udp
+      GroupId: !Ref MasterSecurityGroup
+  MasterIngressAllIcmpCore:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      SourceSecurityGroupId: !Ref CoreSecurityGroup
+      FromPort: -1
+      ToPort: -1
+      IpProtocol: icmp
+      GroupId: !Ref MasterSecurityGroup
+  MasterIngressAllTCPCore:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      SourceSecurityGroupId: !Ref CoreSecurityGroup
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+      GroupId: !Ref MasterSecurityGroup
+  MasterIngressAllUdp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      SourceSecurityGroupId: !Ref CoreSecurityGroup
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: udp
+      GroupId: !Ref MasterSecurityGroup
+  MasterIngressTcp8443Service:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      SourceSecurityGroupId: !Ref ServiceSecurityGroup
+      FromPort: 8443
+      ToPort: 8443
+      IpProtocol: tcp
+      GroupId: !Ref MasterSecurityGroup
+  ## EGRESS ##
+  MasterEgressAllTraffic:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: -1
+      GroupId: !Ref MasterSecurityGroup
+  MasterEgressTcp9443Service:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      DestinationSecurityGroupId: !Ref ServiceSecurityGroup
+      FromPort: 9443
+      ToPort: 9443
+      IpProtocol: tcp
+      GroupId: !Ref MasterSecurityGroup
+  ## SERVICE SG ##
+  ## ingress ##
+  ServiceIngressTcp9443:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref ServiceSecurityGroup
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+      FromPort: 9443
+      ToPort: 9443
+      IpProtocol: tcp
+  ## egress ##
+  ServiceEgressTcp8443Master:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref ServiceSecurityGroup
+      DestinationSecurityGroupId: !Ref MasterSecurityGroup
+      FromPort: 8443
+      ToPort: 8443
+      IpProtocol: tcp
+  ServiceEgressTcp8443Core:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref ServiceSecurityGroup
+      DestinationSecurityGroupId: !Ref CoreSecurityGroup
+      FromPort: 8443
+      ToPort: 8443
+      IpProtocol: tcp
+
+
+###################
+Outputs:
+  MainSecurityGroup:
+    Description: main securityGroup
+    Value: !Ref MasterSecurityGroup
+    Export:
+      Name: "master-sg"
