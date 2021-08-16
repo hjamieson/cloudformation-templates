@@ -1,0 +1,79 @@
+# KDC template for kerberos lab client WS
+# uses aws cfninit script to boot resources
+# Things to remember:
+# 1. you have to declare the CreationPolicy
+# 2. use the userdata to install + invoke the cfn- scripts
+# ip = 169.254.169.254/latest/meta-data/local-ipv4
+# 169.254.169.254/latest/meta-data/local-hostname
+
+Parameters:
+  LabName:
+    Type: String
+    Description: lab prefix
+    Default: fido
+  LabSubnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: subnet for placement
+    Default: subnet-0eb2cda5f41c61d42
+  KdcLocalIp:
+    Type: String
+    Description: ipv4 address of KDC for now
+    Default: 10.84.8.36
+
+Resources:
+  ClientHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0233c2d874b811deb 
+      InstanceType: t2.nano
+      IamInstanceProfile: 
+        Fn::ImportValue:
+          !Sub "${LabName}-InstanceProfile"
+      KeyName: hughdev
+      SubnetId: !Ref LabSubnet
+      SecurityGroupIds:
+        - Fn::ImportValue:
+           !Sub "${LabName}-defaultSG"
+      Tags:
+        - Key:  project
+          Value: lab
+        - Key:  Name
+          Value:  !Sub "${LabName}-client"
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            yum install -y aws-cfn-bootstrap
+            # amazon-linux-extras install epel -y
+            # yum install -y httpie
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ClientHost --region ${AWS::Region}
+            mkdir -p /tmp/krbsetup
+            aws s3 cp s3://hugh-fido-lab /tmp/krbsetup --recursive
+            # /etc/hosts
+            bash /tmp/krbsetup/bin/fix-krb5-conf.sh
+
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ClientHost --region ${AWS::Region}
+    Metadata:
+      "AWS::CloudFormation::Init":
+        config:
+          files:
+            "/tmp/clienthost.txt":
+              content: !Sub |
+                ${AWS::StackName} content here
+              mode: "000755"
+              owner: ec2-user
+              group: ec2-user
+          packages:
+            yum:
+              "krb5-workstation": []
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT5M
+
+  # KdcInstanceProfile:
+  #   Type: AWS::IAM::InstanceProfile
+  #   Properties:
+  #     Roles: 
+  #       - Fn::ImportValue:
+  #           !Sub "${LabName}-KdcAdminRole"

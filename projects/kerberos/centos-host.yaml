@@ -1,0 +1,38 @@
+# KDC template for kerberos lab client WS
+# centos testing
+Parameters:
+  LabName:
+    Type: String
+    Description: lab prefix
+    Default: fido
+  LabSubnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: subnet for placement
+    Default: subnet-0eb2cda5f41c61d42
+
+Resources:
+  CentosHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-01e36b7901e884a10 
+      InstanceType: t3.medium
+      IamInstanceProfile: 
+        Fn::ImportValue:
+          !Sub "${LabName}-InstanceProfile"
+      KeyName: hughdev
+      SubnetId: !Ref LabSubnet
+      SecurityGroupIds:
+        - Fn::ImportValue:
+           !Sub "${LabName}-freeipaSG"
+      Tags:
+        - Key:  project
+          Value: lab
+        - Key:  Name
+          Value:  !Sub "${LabName}-centos"
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            yum update -y
+            yum install -y epel-release
+

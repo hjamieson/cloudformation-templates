@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: EMR Cluster
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: hughdev
+    Description: private key to use
+  TargetSubnet:
+    Type: AWS::EC2::Subnet::Id
+    Description: subnet for placement
+    Default: subnet-0eb2cda5f41c61d42
+  NumberOfCoreInstances:
+    Type: Number 
+    Description: number of worker nodes
+    Default: 2
+
+Resources:
+  MasterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      
+  Cluster1:
+    Type: AWS::EMR::Cluster
+    Properties:
+      Applications:
+        - Name: Ganglia
+        - Name: Hadoop
+        - Name: Spark
+      Name: hugh-emr
+      LogUri: 
+      Instances:
+        Ec2KeyName: !Ref KeyName
+        Ec2SubnetId: !Ref TargetSubnet
+        EmrManagedMasterSecurityGroup: sg-038da7bd41af8f9ba
+        EmrManagedSlaveSecurityGroup: sg-092cb8b27887190da
+        ServiceAccessSecurityGroup: sg-0858fa3d803e73d88
+        TerminationProtected: false
+        MasterInstanceGroup:
+          Name: Master
+          InstanceCount: 1
+          Market: ON_DEMAND
+          InstanceType: m5.2xlarge
+        CoreInstanceGroup:
+          Name: Core
+          Market: ON_DEMAND
+          InstanceCount: !Ref NumberOfCoreInstances
+          InstanceType: m5.xlarge
+
+      ReleaseLabel: emr-6.3.0
+      ServiceRole: EMR_DefaultRole
+      JobFlowRole: EMR_EC2_DefaultRole

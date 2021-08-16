@@ -1,0 +1,111 @@
+# vpc resources our lab cfs will refer to.
+Parameters:
+  LabName:
+    Type: String
+    Description: prefix used for lab components
+    Default: fido
+  VpcSite:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC for placement
+    Default: vpc-05b28a46c5c9c6ed7
+Resources:
+  labSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      # GroupName: defaultSG
+      GroupDescription: securitygroup for lab
+      VpcId: !Ref VpcSite
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+        - CidrIp: 10.84.0.0/16
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: icmp
+        - CidrIp: 10.84.0.0/16
+          FromPort: 88
+          ToPort: 88
+          IpProtocol: tcp
+        - CidrIp: 10.84.0.0/16
+          FromPort: 749
+          ToPort: 749
+          IpProtocol: tcp
+      SecurityGroupEgress:
+        CidrIp: 0.0.0.0/0
+        FromPort: 0
+        ToPort: 65535
+        IpProtocol: -1
+
+  freeipaSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: securitygroup for freeipa test
+      VpcId: !Ref VpcSite
+      SecurityGroupIngress:
+        - CidrIp: 10.84.0.0/16
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: -1
+        - CidrIp: 10.25.0.0/16
+          FromPort: 0
+          ToPort: 65535
+          IpProtocol: -1
+      SecurityGroupEgress:
+        CidrIp: 0.0.0.0/0
+        FromPort: 0
+        ToPort: 65535
+        IpProtocol: -1
+
+
+  LabKdcAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: 
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Description: role for fido lab s3 access
+      RoleName: !Sub ${LabName}-KdcAdminRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+  # KdcInstanceProfile:
+  #   Type: AWS::IAM::InstanceProfile
+  #   Properties:
+  #     Roles: 
+  #       - Fn::ImportValue:
+  #           !Sub "${LabName}-KdcAdminRole"
+  KdcInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: 
+        - !Ref LabKdcAdminRole
+
+
+Outputs:
+  defaultSecurityGroup:
+    Description: default security group for testing
+    Value: !Ref labSG
+    Export:
+      Name: !Join ["-",[!Ref LabName, defaultSG]]  
+  freeIpaSecurityGroup:
+    Description: freeIpa security group for testing
+    Value: !Ref freeipaSG
+    Export:
+      Name: !Join ["-",[!Ref LabName, freeipaSG]]  
+  labKdcAdminRole:
+    Description: role for lab KDC administration
+    Value: !Ref LabKdcAdminRole
+    Export:
+      Name: !Join ["-",[!Ref LabName, KdcAdminRole]]
+  labInstanceProfile:
+    Description: instance profile general
+    Value: !Ref KdcInstanceProfile
+    Export:
+      Name: !Join ["-",[!Ref LabName, InstanceProfile]]
