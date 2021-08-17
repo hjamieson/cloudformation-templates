@@ -20,18 +20,27 @@ Resources:
       GroupName: !Sub "${Prefix}-MasterSecurityGroup"
       GroupDescription: !Sub ${Prefix} main SG
       VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-main-sg
   CoreSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub "${Prefix}-CoreSecurityGroup"
-      GroupDescription: !Sub ${Prefix} Core instances SG
+      GroupDescription: !Sub ${Prefix} core SG
       VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-core-sg
   ServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: !Sub "${Prefix}-ServiceSecurityGroup"
       GroupDescription: !Sub ${Prefix} service SG
       VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-service-sg
 
   MasterIngressAllIcmp:
     Type: AWS::EC2::SecurityGroupIngress
@@ -89,6 +98,15 @@ Resources:
       ToPort: 8443
       IpProtocol: tcp
       GroupId: !Ref MasterSecurityGroup
+  MasterIngressSshVpn:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      CidrIp: 10.25.0.0/16
+      FromPort: 22
+      ToPort: 22
+      IpProtocol: tcp
+      GroupId: !Ref MasterSecurityGroup
+
   ## EGRESS ##
   MasterEgressAllTraffic:
     Type: AWS::EC2::SecurityGroupEgress
@@ -106,6 +124,74 @@ Resources:
       ToPort: 9443
       IpProtocol: tcp
       GroupId: !Ref MasterSecurityGroup
+  
+  ## CORE SG ##
+  ## ingress ##
+  CoreIngressAllIcmp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreSecurityGroup
+      SourceSecurityGroupId: !Ref CoreSecurityGroup
+      FromPort: -1
+      ToPort: -1
+      IpProtocol: icmp
+  CoreIngressAllTcp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreSecurityGroup
+      SourceSecurityGroupId: !Ref CoreSecurityGroup
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+  CoreIngressAllUdp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreSecurityGroup
+      SourceSecurityGroupId: !Ref CoreSecurityGroup
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: udp
+  CoreIngressAllIcmpMaster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreSecurityGroup
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+      FromPort: -1
+      ToPort: -1
+      IpProtocol: icmp
+  CoreIngressAllTcpMaster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreSecurityGroup
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+  CoreIngressAllUdpMaster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreSecurityGroup
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: udp
+  CoreIngress8443Service:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreSecurityGroup
+      SourceSecurityGroupId: !Ref ServiceSecurityGroup
+      FromPort: 8443
+      ToPort: 8443
+      IpProtocol: tcp
+  ## egress ##
+  CoreEgressAllTraffic:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: -1
+      GroupId: !Ref CoreSecurityGroup
   ## SERVICE SG ##
   ## ingress ##
   ServiceIngressTcp9443:
@@ -141,4 +227,14 @@ Outputs:
     Description: main securityGroup
     Value: !Ref MasterSecurityGroup
     Export:
-      Name: "master-sg"
+      Name: !Sub ${Prefix}-master-sg
+  CoreSecurityGroup:
+    Description: core securityGroup
+    Value: !Ref CoreSecurityGroup
+    Export:
+      Name: !Sub ${Prefix}-core-sg
+  ServiceSecurityGroup:
+    Description: service securityGroup
+    Value: !Ref ServiceSecurityGroup
+    Export:
+      Name: !Sub ${Prefix}-service-sg
