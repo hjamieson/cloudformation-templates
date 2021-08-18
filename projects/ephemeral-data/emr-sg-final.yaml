@@ -102,8 +102,8 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       CidrIp: 10.25.0.0/16
-      FromPort: 22
-      ToPort: 22
+      FromPort: 0
+      ToPort: 65535
       IpProtocol: tcp
       GroupId: !Ref MasterSecurityGroup
 
