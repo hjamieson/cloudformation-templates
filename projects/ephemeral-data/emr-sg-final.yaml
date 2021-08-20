@@ -98,7 +98,7 @@ Resources:
       ToPort: 8443
       IpProtocol: tcp
       GroupId: !Ref MasterSecurityGroup
-  MasterIngressSshVpn:
+  MasterIngressVpnAll:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       CidrIp: 10.25.0.0/16
@@ -183,6 +183,14 @@ Resources:
       FromPort: 8443
       ToPort: 8443
       IpProtocol: tcp
+  CoreIngressVpnAll:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      CidrIp: 10.25.0.0/16
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+      GroupId: !Ref CoreSecurityGroup
   ## egress ##
   CoreEgressAllTraffic:
     Type: AWS::EC2::SecurityGroupEgress

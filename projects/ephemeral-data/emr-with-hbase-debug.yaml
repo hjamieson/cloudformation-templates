@@ -21,23 +21,25 @@ Parameters:
 
 Resources:
       
-  Cluster1:
+  Cluster:
     Type: AWS::EMR::Cluster
     Properties:
       Applications:
-        - Name: HBase
         - Name: Hadoop
+        - Name: HBase
         - Name: Spark
-      Name: hugh-emr
+      Name: !Sub "${Prefix}-emr-lab"
       LogUri: s3://hugh-fido-lab/emr/logs
       Instances:
         Ec2KeyName: !Ref KeyName
         Ec2SubnetId: !Ref TargetSubnet
-        EmrManagedMasterSecurityGroup: 
-          Fn::ImportValue :
-            !Sub "${Prefix}-master-sg"
-        EmrManagedSlaveSecurityGroup: !ImportValue fido-core-sg
-        ServiceAccessSecurityGroup: !ImportValue fido-service-sg
+        EmrManagedMasterSecurityGroup: sg-038da7bd41af8f9ba
+        AdditionalMasterSecurityGroups:
+          - sg-020b899e72e7e6849
+        EmrManagedSlaveSecurityGroup: sg-092cb8b27887190da
+        AdditionalSlaveSecurityGroups:
+          - sg-020b899e72e7e6849
+        ServiceAccessSecurityGroup: sg-0858fa3d803e73d88
         TerminationProtected: false
         MasterInstanceGroup:
           Name: Master
