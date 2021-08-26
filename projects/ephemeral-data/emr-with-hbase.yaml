@@ -18,6 +18,10 @@ Parameters:
     Type: String
     Description: prefix used for exported resources
     Default: fido
+  HBaseRootS3:
+    Type: String
+    Description: HBase s3 rootdir
+    Default: s3://hugh-fido-lab/emr/roots/lab1/
 
 Resources:
       
@@ -30,6 +34,15 @@ Resources:
         - Name: Spark
       Name: !Sub "${Prefix}-emr-lab"
       LogUri: s3://hugh-fido-lab/emr/logs
+      
+      Configurations:
+        - Classification: "hbase-site"
+          ConfigurationProperties:
+            "hbase.rootdir": !Ref HBaseRootS3
+        - Classification: hbase
+          ConfigurationProperties:
+            "hbase.emr.storageMode": s3
+
       Instances:
         Ec2KeyName: !Ref KeyName
         Ec2SubnetId: !Ref TargetSubnet
