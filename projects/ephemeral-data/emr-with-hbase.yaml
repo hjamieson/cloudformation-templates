@@ -32,6 +32,15 @@ Resources:
         - Name: Hadoop
         - Name: HBase
         - Name: Spark
+
+      BootstrapActions:
+        - Name: dns registration
+          ScriptBootstrapAction:
+            Path: s3://hugh-fido-lab/bin/dns-reg.sh
+        - Name: create termination folder
+          ScriptBootstrapAction:
+            Path: s3://hugh-fido-lab/bin/termination-hook.sh
+            
       Name: !Sub "${Prefix}-emr-lab"
       LogUri: s3://hugh-fido-lab/emr/logs
       
